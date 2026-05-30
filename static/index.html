@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>FlatMate-OS · Smart Flat Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,600;9..40,700&family=JetBrains+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+    <canvas id="grid-canvas"></canvas>
+    <div class="page">
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-mark">FM</div>
+                <div>
+                    <div class="logo-title">FlatMate<span>OS</span></div>
+                    <div class="logo-sub">5-MEMBER · SMART EXPENSE LEDGER &amp; DUTY MANAGER</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="member-pills">
+                    <span class="pill" title="Tirtha">T</span>
+                    <span class="pill" title="Murshed">M</span>
+                    <span class="pill" title="Kishor">K</span>
+                    <span class="pill" title="Tarek">Tk</span>
+                    <span class="pill" title="Siam">S</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- COMMAND -->
+        <section class="command-section">
+            <div class="command-label">
+                <span class="cmd-tag">⚡ AI COMMAND</span>
+                <span class="cmd-hint">Type naturally — Mistral AI parses the intent automatically</span>
+            </div>
+            <div class="command-box">
+                <textarea id="message-input" rows="2" spellcheck="false"
+                    placeholder='e.g. "Murshed paid 1200 for internet" or "Assign cleaning duty to Siam today"'></textarea>
+                <button class="send-btn" id="send-btn" disabled>
+                    <span id="btn-text">Run Command</span>
+                    <svg id="btn-spinner" class="spinner hidden" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" stroke-dasharray="32"
+                            stroke-dashoffset="12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="feedback" id="feedback"></div>
+        </section>
+
+        <!-- CHIPS -->
+        <div class="chips">
+            <span class="chip" onclick="fillInput('Murshed paid 150 for fish')">🐟 Murshed · fish 150</span>
+            <span class="chip" onclick="fillInput('Tirtha paid 850 for gas cylinder')">⛽ Tirtha · gas 850</span>
+            <span class="chip" onclick="fillInput('Siam spent 1500 on groceries')">🛒 Siam · groceries 1500</span>
+            <span class="chip" onclick="fillInput('Kishor paid 600 for electricity')">💡 Kishor · electricity 600</span>
+            <span class="chip" onclick="fillInput('Tarek paid 1200 for internet bill')">📶 Tarek · internet 1200</span>
+            <span class="chip" onclick="fillInput('Assign flat cleaning duty to Siam today')">🧹 Siam · cleaning
+                duty</span>
+            <span class="chip" onclick="fillInput('Tomorrow is Murshed bazaar duty turn')">📅 Murshed · bazaar
+                turn</span>
+            <span class="chip" onclick="fillInput('Assign cooking duty to Tirtha tonight')">🍳 Tirtha · cooking
+                duty</span>
+        </div>
+
+        <!-- BALANCES -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-title">Net Balances</div>
+                <button class="refresh-btn" onclick="loadAll()">↻ Refresh All</button>
+            </div>
+            <div class="balance-grid" id="balance-grid"></div>
+        </section>
+
+        <!-- STATS -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Spent This Month</div>
+                <div class="stat-value" id="stat-month">৳0</div>
+                <div class="stat-sub">all categories combined</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Expenses Logged</div>
+                <div class="stat-value" id="stat-count">0</div>
+                <div class="stat-sub">entries in the ledger</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Duties Assigned</div>
+                <div class="stat-value" id="stat-duties">0</div>
+                <div class="stat-sub">email notifications sent</div>
+            </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-title">MONTHLY SPENDING TREND (LAST 6 MONTHS)</div>
+                <div class="chart-wrap"><canvas id="line-chart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">SPENDING BY CATEGORY</div>
+                <div class="chart-wrap"><canvas id="pie-chart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- TABLES -->
+        <section class="section">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('expenses',this)">📊 Recent Expenses</button>
+                <button class="tab" onclick="switchTab('turns',this)">🗓 Duty Schedule</button>
+            </div>
+
+            <div id="tab-expenses" class="tab-panel active">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Payer</th>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Total (৳)</th>
+                            <th>Each Owes (৳)</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expense-tbody">
+                        <tr>
+                            <td colspan="6" class="empty-row">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="tab-turns" class="tab-panel">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Duty</th>
+                            <th>Assigned At</th>
+                            <th>Email Sent</th>
+                        </tr>
+                    </thead>
+                    <tbody id="turn-tbody">
+                        <tr>
+                            <td colspan="4" class="empty-row">Loading…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer class="footer">
+            FLATMATE-OS &nbsp;·&nbsp; MISTRAL AI + POSTGRESQL &nbsp;·&nbsp;
+            TIRTHA · MURSHED · KISHOR · TAREK · SIAM
+        </footer>
+    </div>
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
